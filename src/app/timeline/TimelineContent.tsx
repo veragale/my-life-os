@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Plus, X, Save, Trash2 } from "lucide-react";
+import { Plus, X, Save, Trash2, Pencil } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEditMode } from "@/components/EditProvider";
 import { useContentEditor } from "@/hooks/useContentEditor";
@@ -18,16 +18,38 @@ const timelineOverrides = {
   p: ({ children }: any) => <p className="text-sm leading-[1.8] text-ink-600 dark:text-ink-400 mb-3 last:mb-0">{children}</p>,
 };
 
+const emptyForm = { year: new Date().getFullYear().toString(), title: "", tags: "", body: "" };
+
 // ── 组件 ─────────────────────────────────────────────────
 export default function TimelineContent({ entries }: TimelineContentProps) {
   const { isEditing } = useEditMode();
   const { save, remove } = useContentEditor();
 
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ year: new Date().getFullYear().toString(), title: "", tags: "", body: "" });
+  const [editingEntry, setEditingEntry] = useState<TimelineEntry | null>(null);
+  const [form, setForm] = useState(emptyForm);
 
-  // ── 新增 ──────────────────────────────────────────────
-  const handleCreate = useCallback(async () => {
+  // ── 打开新建弹窗 ──────────────────────────────────────
+  const openCreate = () => {
+    setEditingEntry(null);
+    setForm(emptyForm);
+    setShowModal(true);
+  };
+
+  // ── 打开编辑弹窗 ──────────────────────────────────────
+  const openEdit = (entry: TimelineEntry) => {
+    setEditingEntry(entry);
+    setForm({
+      year: entry.year,
+      title: entry.title,
+      tags: entry.tags.join(", "),
+      body: entry.body.replace(/^# .+\n\n/, ""), // 去掉 "# 标题" 行
+    });
+    setShowModal(true);
+  };
+
+  // ── 提交（新增/更新）───────────────────────────────────
+  const handleSubmit = useCallback(async () => {
     if (!form.year || !form.title || !form.body) return;
     const tags = form.tags.split(/[,，]/).map((t) => t.trim()).filter(Boolean);
     const ok = await save({
@@ -35,7 +57,7 @@ export default function TimelineContent({ entries }: TimelineContentProps) {
       body: `# ${form.title}\n\n${form.body}`,
       metadata: { title: form.title, date: `${form.year}-01-01`, year: form.year, tags },
     });
-    if (ok) { setShowModal(false); setForm({ year: new Date().getFullYear().toString(), title: "", tags: "", body: "" }); }
+    if (ok) { setShowModal(false); setEditingEntry(null); setForm(emptyForm); }
   }, [form, save]);
 
   // ── 删除 ──────────────────────────────────────────────
@@ -44,13 +66,15 @@ export default function TimelineContent({ entries }: TimelineContentProps) {
     await remove("timeline", year);
   }, [remove]);
 
+  const isEditMode = !!editingEntry;
+
   return (
     <>
       {/* ── 编辑模式：新增按钮 ─────────────────────── */}
       <AnimatePresence>
         {isEditing && (
           <motion.div className="mb-8" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-            <button onClick={() => setShowModal(true)}
+            <button onClick={openCreate}
               className="inline-flex items-center gap-2 px-4 py-2.5 border border-dashed border-ink-300 dark:border-ink-700 rounded-lg text-sm text-ink-500 dark:text-ink-400 hover:border-ink-500 dark:hover:border-ink-500 hover:text-ink-700 dark:hover:text-ink-300 transition-colors duration-200 w-full justify-center">
               <Plus size={16} /> 新增年份大事记
             </button>
@@ -75,50 +99,62 @@ export default function TimelineContent({ entries }: TimelineContentProps) {
               )}
             </div>
             <div className="rounded-lg border border-ink-200 dark:border-ink-800 px-5 py-5 group/card relative">
-              {/* ── 删除按钮 ──────────────────────── */}
+              {/* ── 编辑/删除按钮 ──────────────────── */}
               {isEditing && (
-                <button onClick={() => handleDelete(entry.year)}
-                  className="absolute top-2 right-2 p-1.5 rounded-md text-ink-300 dark:text-ink-700 hover:text-red-500 dark:hover:text-red-400 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors">
-                  <Trash2 size={14} />
-                </button>
+                <div className="absolute top-2 right-2 flex items-center gap-1">
+                  <button onClick={() => openEdit(entry)}
+                    className="p-1.5 rounded-md text-ink-300 dark:text-ink-700 hover:text-ink-700 dark:hover:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors">
+                    <Pencil size={14} />
+                  </button>
+                  <button onClick={() => handleDelete(entry.year)}
+                    className="p-1.5 rounded-md text-ink-300 dark:text-ink-700 hover:text-red-500 dark:hover:text-red-400 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               )}
-              <h3 className="text-base font-semibold text-ink-800 dark:text-ink-200 mb-3 pr-8">{entry.title}</h3>
+              <h3 className="text-base font-semibold text-ink-800 dark:text-ink-200 mb-3 pr-16">{entry.title}</h3>
               <MarkdownRenderer content={entry.body} overrides={timelineOverrides} />
             </div>
           </li>
         ))}
       </ol>
 
-      {/* ── 新增弹窗 ────────────────────────────────── */}
+      {/* ── 弹窗（新增/编辑共用）─────────────────────── */}
       <AnimatePresence>
         {showModal && (
           <motion.div className="fixed inset-0 z-[90] flex items-center justify-center px-4 bg-ink-950/40 backdrop-blur-sm"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setShowModal(false)}>
+            onClick={() => { setShowModal(false); setEditingEntry(null); }}>
             <motion.div className="w-full max-w-lg bg-ink-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-2xl p-6 shadow-2xl"
               initial={{ scale: 0.95, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 12 }}
               transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
               onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">新增年份大事记</h3>
-                <button onClick={() => setShowModal(false)} className="p-1.5 rounded-md text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors"><X size={16} /></button>
+                <h3 className="text-lg font-semibold">
+                  {isEditMode ? "编辑年份大事记" : "新增年份大事记"}
+                </h3>
+                <button onClick={() => { setShowModal(false); setEditingEntry(null); }}
+                  className="p-1.5 rounded-md text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors"><X size={16} /></button>
               </div>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] text-ink-400 dark:text-ink-600 mb-1.5 font-mono">年份</label>
-                    <input type="text" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2026"
-                      className="w-full px-3 py-2 text-sm bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-ink-300/50 dark:focus:ring-ink-700/50 text-ink-800 dark:text-ink-200 font-mono" />
+                    <input type="text" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}
+                      disabled={isEditMode}
+                      className="w-full px-3 py-2 text-sm bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-ink-300/50 dark:focus:ring-ink-700/50 text-ink-800 dark:text-ink-200 font-mono disabled:opacity-40" />
                   </div>
                   <div>
                     <label className="block text-[11px] text-ink-400 dark:text-ink-600 mb-1.5 font-mono">标签（逗号分隔）</label>
-                    <input type="text" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="成长, 里程碑"
+                    <input type="text" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                      placeholder="成长, 里程碑"
                       className="w-full px-3 py-2 text-sm bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-ink-300/50 dark:focus:ring-ink-700/50 text-ink-800 dark:text-ink-200" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-[11px] text-ink-400 dark:text-ink-600 mb-1.5 font-mono">标题</label>
-                  <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="2026：此刻"
+                  <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    placeholder="2026：此刻"
                     className="w-full px-3 py-2 text-sm bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-ink-300/50 dark:focus:ring-ink-700/50 text-ink-800 dark:text-ink-200" />
                 </div>
                 <div>
@@ -129,10 +165,11 @@ export default function TimelineContent({ entries }: TimelineContentProps) {
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-6">
-                <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm text-ink-500 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-300 transition-colors">取消</button>
-                <button onClick={handleCreate} disabled={!form.year || !form.title || !form.body}
+                <button onClick={() => { setShowModal(false); setEditingEntry(null); }}
+                  className="px-4 py-2 text-sm text-ink-500 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-300 transition-colors">取消</button>
+                <button onClick={handleSubmit} disabled={!form.year || !form.title || !form.body}
                   className="inline-flex items-center gap-1.5 px-4 py-2 text-sm bg-ink-900 dark:bg-ink-100 text-ink-50 dark:text-ink-900 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed">
-                  <Save size={14} /> 创建并同步
+                  <Save size={14} /> {isEditMode ? "更新并同步" : "创建并同步"}
                 </button>
               </div>
             </motion.div>

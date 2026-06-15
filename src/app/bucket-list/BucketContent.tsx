@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Check, Circle, Save, Plus, X, Trash2 } from "lucide-react";
+import { Check, Circle, Save, Plus, X, Trash2, Pencil } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEditMode } from "@/components/EditProvider";
 import { useContentEditor } from "@/hooks/useContentEditor";
@@ -52,6 +52,8 @@ export default function BucketContent({ metadata, body }: BucketContentProps) {
   const [groups, setGroups] = useState<BucketGroup[]>(() => parseBucketBody(body));
   const [newItemText, setNewItemText] = useState("");
   const [addingToGroup, setAddingToGroup] = useState<number | null>(null);
+  const [editingItem, setEditingItem] = useState<{ gi: number; ii: number } | null>(null);
+  const [editText, setEditText] = useState("");
 
   // ── 保存全部 ─────────────────────────────────────────
   const doSave = useCallback(async (next: BucketGroup[]) => {
@@ -90,6 +92,24 @@ export default function BucketContent({ metadata, body }: BucketContentProps) {
     doSave(next);
   }, [groups, doSave]);
 
+  // ── 修改条目文字 ─────────────────────────────────────
+  const startEditItem = (gi: number, ii: number, text: string) => {
+    setEditingItem({ gi, ii });
+    setEditText(text);
+  };
+  const commitEditItem = () => {
+    if (!editingItem || !editText.trim()) return;
+    const { gi, ii } = editingItem;
+    const next = groups.map((g, gIdx) => gIdx !== gi ? g : {
+      ...g, items: g.items.map((item, iIdx) =>
+        iIdx === ii ? { ...item, text: editText.trim() } : item
+      ),
+    });
+    setEditingItem(null);
+    setEditText("");
+    doSave(next);
+  };
+
   // ── 统计 ─────────────────────────────────────────────
   const totalItems = groups.reduce((s, g) => s + g.items.length, 0);
   const doneItems = groups.reduce((s, g) => s + g.items.filter((i) => i.done).length, 0);
@@ -120,21 +140,43 @@ export default function BucketContent({ metadata, body }: BucketContentProps) {
               </div>
 
               <ul className="space-y-2">
-                {group.items.map((item, ii) => (
+                {group.items.map((item, ii) => {
+                  const isEditingThis = editingItem?.gi === gi && editingItem?.ii === ii;
+                  return (
                   <li key={ii}
-                    className={`flex items-start gap-3 rounded-lg px-4 py-3 border transition-colors duration-150 ${item.done ? "border-ink-200/60 dark:border-ink-800/60 bg-ink-50/50 dark:bg-ink-900/30" : "border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950/50"} ${isEditing ? "cursor-pointer" : ""}`}
-                    onClick={isEditing ? () => toggleItem(gi, ii) : undefined}>
+                    className={`flex items-start gap-3 rounded-lg px-4 py-3 border transition-colors duration-150 ${item.done ? "border-ink-200/60 dark:border-ink-800/60 bg-ink-50/50 dark:bg-ink-900/30" : "border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950/50"} ${isEditing && !isEditingThis ? "cursor-pointer" : ""}`}
+                    onClick={isEditing && !isEditingThis ? () => toggleItem(gi, ii) : undefined}>
                     {item.done ? <Check size={16} className="mt-0.5 shrink-0 text-ink-400 dark:text-ink-500" /> : <Circle size={16} className="mt-0.5 shrink-0 text-ink-300 dark:text-ink-700" />}
-                    <span className={`text-sm leading-relaxed flex-1 ${item.done ? "line-through text-ink-400 dark:text-ink-600" : "text-ink-800 dark:text-ink-200"}`}>{item.text}</span>
-                    {/* ── 删除按钮 ─────────────────── */}
-                    {isEditing && (
-                      <button onClick={(e) => { e.stopPropagation(); deleteItem(gi, ii); }}
-                        className="shrink-0 text-ink-200 dark:text-ink-800 hover:text-red-500 dark:hover:text-red-400 transition-colors">
-                        <Trash2 size={13} />
+                    {/* ── 编辑模式：文字变输入框 ─────── */}
+                    {isEditingThis ? (
+                      <input type="text" value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") commitEditItem(); if (e.key === "Escape") { setEditingItem(null); setEditText(""); } }}
+                        className="flex-1 text-sm bg-transparent border-b border-ink-300 dark:border-ink-600 focus:outline-none focus:border-ink-700 dark:focus:border-ink-300 text-ink-800 dark:text-ink-200 pb-0.5" autoFocus />
+                    ) : (
+                      <span className={`text-sm leading-relaxed flex-1 ${item.done ? "line-through text-ink-400 dark:text-ink-600" : "text-ink-800 dark:text-ink-200"}`}>{item.text}</span>
+                    )}
+                    {/* ── 编辑/删除按钮 ─────────────── */}
+                    {isEditing && !isEditingThis && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); startEditItem(gi, ii, item.text); }}
+                          className="shrink-0 text-ink-200 dark:text-ink-800 hover:text-ink-700 dark:hover:text-ink-300 transition-colors">
+                          <Pencil size={13} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); deleteItem(gi, ii); }}
+                          className="shrink-0 text-ink-200 dark:text-ink-800 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+                          <Trash2 size={13} />
+                        </button>
+                      </>
+                    )}
+                    {isEditingThis && (
+                      <button onClick={commitEditItem}
+                        className="shrink-0 text-emerald-500 hover:text-emerald-600 transition-colors">
+                        <Save size={13} />
                       </button>
                     )}
                   </li>
-                ))}
+                )})}
 
                 {/* ── 编辑：添加新条目 ────────────── */}
                 <AnimatePresence>
