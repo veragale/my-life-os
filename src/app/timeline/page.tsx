@@ -1,5 +1,8 @@
 import { CalendarDays } from "lucide-react";
+import { Suspense } from "react";
 import TimelineContent from "./TimelineContent";
+
+export const dynamic = "force-dynamic";
 
 // ── 数据类型 ─────────────────────────────────────────────
 interface TimelineEntry {
@@ -51,7 +54,9 @@ export default async function TimelinePage() {
       </header>
 
       {/* ── 时间轴（含编辑功能）──────────────────────── */}
-      <TimelineContent entries={data.entries} />
+      <Suspense fallback={<div className="text-center py-8 text-ink-400">Loading...</div>}>
+        <TimelineContent entries={data.entries} />
+      </Suspense>
 
       {/* ── 底部 ─────────────────────────────────────── */}
       <div className="mt-16 pt-8 border-t border-ink-200 dark:border-ink-800">

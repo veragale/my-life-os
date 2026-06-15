@@ -15,10 +15,10 @@ interface GardenContentProps { entries: GardenEntry[]; }
 
 // ── 状态视觉映射（新增 growth）─────────────────────────
 const STATUS_CONFIG = {
-  seedling: { label: "Seedling", labelCn: "幼苗", icon: Sprout, color: { bg: "bg-emerald-50 dark:bg-emerald-950/40", border: "border-emerald-200 dark:border-emerald-800/60", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-400 dark:bg-emerald-500" } },
-  budding:  { label: "Budding", labelCn: "发芽", icon: Flower2, color: { bg: "bg-amber-50 dark:bg-amber-950/40", border: "border-amber-200 dark:border-amber-800/60", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-400 dark:bg-amber-500" } },
-  growth:   { label: "Growth", labelCn: "成长", icon: Leaf, color: { bg: "bg-lime-50 dark:bg-lime-950/40", border: "border-lime-200 dark:border-lime-800/60", text: "text-lime-700 dark:text-lime-400", dot: "bg-lime-400 dark:bg-lime-500" } },
-  evergreen:{ label: "Evergreen", labelCn: "常青", icon: TreePine, color: { bg: "bg-teal-50 dark:bg-teal-950/40", border: "border-teal-200 dark:border-teal-800/60", text: "text-teal-700 dark:text-teal-400", dot: "bg-teal-400 dark:bg-teal-500" } },
+  seedling: { label: "Seedling", labelCn: "幼苗", icon: Sprout, color: { bg: "bg-emerald-50/80 dark:bg-emerald-950/20 backdrop-blur-md", border: "border-emerald-200/60 dark:border-emerald-800/40", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-400 dark:bg-emerald-500" } },
+  budding:  { label: "Budding", labelCn: "发芽", icon: Flower2, color: { bg: "bg-amber-50/80 dark:bg-amber-950/20 backdrop-blur-md", border: "border-amber-200/60 dark:border-amber-800/40", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-400 dark:bg-amber-500" } },
+  evergreen:{ label: "Evergreen", labelCn: "常青", icon: TreePine, color: { bg: "bg-teal-50/80 dark:bg-teal-950/20 backdrop-blur-md", border: "border-teal-200/60 dark:border-teal-800/40", text: "text-teal-700 dark:text-teal-400", dot: "bg-teal-400 dark:bg-teal-500" } },
+  growth:   { label: "Growth", labelCn: "成长", icon: Leaf, color: { bg: "bg-lime-50/80 dark:bg-lime-950/20 backdrop-blur-md", border: "border-lime-200/60 dark:border-lime-800/40", text: "text-lime-700 dark:text-lime-400", dot: "bg-lime-400 dark:bg-lime-500" } },
 } as const;
 type StatusKey = keyof typeof STATUS_CONFIG;
 
@@ -208,27 +208,27 @@ export default function GardenContent({ entries }: GardenContentProps) {
       <AnimatePresence>
         {modalEntry && (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-white/40 dark:bg-ink-950/60 backdrop-blur-md overflow-y-auto"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setModalEntry(null)}>
-            
+
             {/* 👉 直接塞进来的强制锁定 CSS 👈 */}
             <style dangerouslySetInnerHTML={{__html: `
               body, html, #__next, main, [data-scroll-container] {
                 overflow: hidden !important;
                 height: 100vh !important;
-                touch-action: none; 
+                touch-action: none;
               }
             `}} />
             <motion.div
-              className="relative w-full max-w-3xl my-8 bg-ink-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+              className="relative w-full max-w-3xl my-8 bg-white/90 dark:bg-ink-900/95 backdrop-blur-xl border border-neutral-200/80 dark:border-ink-800/60 rounded-2xl shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/90 ring-1 ring-black/5 dark:ring-white/15 overflow-hidden flex flex-col max-h-[85vh]"
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               onClick={(e) => e.stopPropagation()}>
               {/* ── Header ────────────────────────── */}
-              <div className="flex items-start justify-between p-6 border-b border-ink-200 dark:border-ink-800">
+              <div className="flex items-start justify-between p-6 border-b border-neutral-200/60 dark:border-ink-800">
                 <div className="flex-1 pr-4">
-                  <h1 className="text-2xl font-bold text-ink-900 dark:text-ink-100 mb-2">{modalEntry.title}</h1>
+                  <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">{modalEntry.title}</h1>
                   <div className="flex items-center gap-3 flex-wrap">
                     {(() => {
                       const cfg = STATUS_CONFIG[modalEntry.status as StatusKey];
