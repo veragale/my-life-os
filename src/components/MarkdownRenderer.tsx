@@ -1,5 +1,9 @@
+"use client";
+
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ── 默认排版组件 ─────────────────────────────────────────
 const defaultComponents: Components = {
@@ -91,14 +95,46 @@ export default function MarkdownRenderer({
   overrides,
   className,
 }: MarkdownRendererProps) {
+  const [zoomedImg, setZoomedImg] = useState<string | null>(null);
+
   const components: Components = {
     ...defaultComponents,
+    img: ({ src, alt, ...props }: any) => (
+      <img
+        src={src}
+        alt={alt}
+        onClick={() => setZoomedImg(src)}
+        className="w-full max-w-3xl mx-auto rounded-xl border border-neutral-200/60 dark:border-ink-800/50 shadow-sm cursor-zoom-in hover:opacity-90 transition-opacity my-8"
+        {...props}
+      />
+    ),
     ...overrides,
   };
 
   return (
-    <div className={className}>
-      <ReactMarkdown components={components}>{content}</ReactMarkdown>
-    </div>
+    <>
+      <div className={className}>
+        <ReactMarkdown components={components}>{content}</ReactMarkdown>
+      </div>
+
+      <AnimatePresence>
+        {zoomedImg && (
+          <div
+            className="fixed inset-0 z-[200] bg-white/90 dark:bg-ink-950/95 backdrop-blur-xl flex items-center justify-center p-4 cursor-zoom-out"
+            onClick={() => setZoomedImg(null)}
+          >
+            <motion.img
+              src={zoomedImg}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
