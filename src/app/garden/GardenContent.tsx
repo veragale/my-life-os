@@ -59,10 +59,11 @@ export default function GardenContent({ entries }: GardenContentProps) {
     } else {
       document.body.style.overflow = "unset";
     }
+    // 组件销毁时的安全解绑
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [modalEntry]);
+  }, [modalEntry]);// ⚠️ 注意：这里的依赖项必须填 [selectedPost]！
 
   const openCreate = () => { setEditingEntry(null); setForm(emptyForm); setShowNote(true); };
   const openEdit = (entry: GardenEntry) => {
@@ -207,11 +208,20 @@ export default function GardenContent({ entries }: GardenContentProps) {
       <AnimatePresence>
         {modalEntry && (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-md"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-ink-950/60 backdrop-blur-md overflow-y-auto"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setModalEntry(null)}>
+            
+            {/* 👉 直接塞进来的强制锁定 CSS 👈 */}
+            <style dangerouslySetInnerHTML={{__html: `
+              body, html, #__next, main, [data-scroll-container] {
+                overflow: hidden !important;
+                height: 100vh !important;
+                touch-action: none; 
+              }
+            `}} />
             <motion.div
-              className="relative w-full max-w-3xl max-h-[85vh] bg-ink-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+              className="relative w-full max-w-3xl my-8 bg-ink-50 dark:bg-ink-900 border border-ink-200 dark:border-ink-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               onClick={(e) => e.stopPropagation()}>
@@ -246,7 +256,11 @@ export default function GardenContent({ entries }: GardenContentProps) {
                 </button>
               </div>
               {/* ── Body（可滚动）─────────────────── */}
-              <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div 
+                className="flex-1 overflow-y-auto overscroll-contain px-6 py-6"
+                onWheel={(e) => e.stopPropagation()}
+                data-lenis-prevent="true"
+              >
                 <MarkdownRenderer content={modalEntry.body} />
               </div>
             </motion.div>
