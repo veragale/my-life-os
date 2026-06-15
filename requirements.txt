@@ -1,0 +1,9 @@
+# my-life-os Python backend
+# 当前仅使用 Python 标准库，无第三方依赖
+# Python 3.10+
+
+# 如需引入 frontmatter 解析库（替代手写解析器）：
+# python-frontmatter>=1.0.0
+
+# 如需引入 Markdown 转 HTML 库：
+# markdown>=3.4.0

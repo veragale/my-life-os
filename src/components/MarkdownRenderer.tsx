@@ -1,0 +1,104 @@
+import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
+
+// ── 默认排版组件 ─────────────────────────────────────────
+const defaultComponents: Components = {
+  h1: ({ children }) => (
+    <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-8 leading-tight">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-xl font-semibold mt-10 mb-4 text-ink-800 dark:text-ink-200">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-lg font-semibold mt-8 mb-3 text-ink-800 dark:text-ink-200">
+      {children}
+    </h3>
+  ),
+  p: ({ children }) => (
+    <p className="text-base leading-[1.85] text-ink-700 dark:text-ink-300 mb-4">
+      {children}
+    </p>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold text-ink-900 dark:text-ink-100">
+      {children}
+    </strong>
+  ),
+  em: ({ children }) => (
+    <em className="italic text-ink-600 dark:text-ink-400">{children}</em>
+  ),
+  hr: () => (
+    <hr className="my-10 border-t border-ink-200 dark:border-ink-800" />
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="my-8 pl-5 border-l-2 border-ink-300 dark:border-ink-700 text-ink-500 dark:text-ink-400 italic leading-relaxed">
+      {children}
+    </blockquote>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline decoration-ink-300 dark:decoration-ink-600 underline-offset-2 hover:decoration-ink-900 dark:hover:decoration-ink-100 transition-colors"
+    >
+      {children}
+    </a>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc list-inside space-y-1 text-ink-700 dark:text-ink-300 mb-4">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal list-inside space-y-1 text-ink-700 dark:text-ink-300 mb-4">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  code: ({ className, children }) => {
+    const isInline = !className;
+    if (isInline) {
+      return (
+        <code className="px-1.5 py-0.5 rounded text-sm font-mono bg-ink-100 dark:bg-ink-800 text-ink-800 dark:text-ink-200">
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code className={`${className} block rounded-lg p-4 text-sm font-mono bg-ink-100 dark:bg-ink-800 text-ink-800 dark:text-ink-200 overflow-x-auto my-4`}>
+        {children}
+      </code>
+    );
+  },
+};
+
+// ── 组件 ─────────────────────────────────────────────────
+interface MarkdownRendererProps {
+  content: string;
+  /** 覆盖特定元素的渲染方式 */
+  overrides?: Partial<Components>;
+  /** 额外 className 包裹层 */
+  className?: string;
+}
+
+export default function MarkdownRenderer({
+  content,
+  overrides,
+  className,
+}: MarkdownRendererProps) {
+  const components: Components = {
+    ...defaultComponents,
+    ...overrides,
+  };
+
+  return (
+    <div className={className}>
+      <ReactMarkdown components={components}>{content}</ReactMarkdown>
+    </div>
+  );
+}

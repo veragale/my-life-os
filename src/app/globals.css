@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply text-ink-900 dark:text-ink-100 font-sans leading-relaxed;
+    /* 方案 B：CSS 渐变背景 */
+    background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 50%, #fafafa 100%);
+  }
+
+  .dark body {
+    background: linear-gradient(135deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
+  }
+
+  ::selection {
+    @apply bg-ink-900 text-ink-50 dark:bg-ink-100 dark:text-ink-900;
+  }
+}
+
+/* ── Lenis 丝滑滚动必要样式 ──────────────────────────── */
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* ── 隐藏默认光标（仅鼠标设备）────────────────────────── */
+
+@media (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}
+
+/* ── 进场动画 ──────────────────────────────────────────── */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bar-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--bar-width);
+  }
+}
+
+/* ── 动画工具类 ────────────────────────────────────────── */
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.7s ease-out both;
+}
+
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animate-bar-fill {
+  animation: bar-fill 1.2s ease-out both;
+  animation-delay: 400ms;
+}
+
+/* ── 减少动效偏好 ──────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-bar-fill {
+    animation: none !important;
+  }
+}
