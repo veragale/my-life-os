@@ -113,4 +113,38 @@ html.lenis body {
   .animate-bar-fill {
     animation: none !important;
   }
+  .bg-orb,
+  .bg-noise-layer {
+    animation: none !important;
+  }
+}
+
+/* ── 流光圆团漂移动画 ──────────────────────────────────── */
+
+@keyframes drift-1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  25%  { transform: translate(8vw, -4vh) scale(1.15); }
+  50%  { transform: translate(4vw, -12vh) scale(0.9); }
+  75%  { transform: translate(-4vw, -6vh) scale(1.1); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes drift-2 {
+  0%   { transform: translate(0, 0) scale(1.1); }
+  33%  { transform: translate(-6vw, -10vh) scale(0.85); }
+  66%  { transform: translate(-10vw, -2vh) scale(1.2); }
+  100% { transform: translate(0, 0) scale(1.1); }
+}
+
+@keyframes drift-3 {
+  0%   { transform: translate(0, 0) scale(1.05); }
+  20%  { transform: translate(5vw, 5vh) scale(0.95); }
+  50%  { transform: translate(-3vw, 8vh) scale(1.1); }
+  80%  { transform: translate(-8vw, 2vh) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1.05); }
+}
+
+@keyframes noise-shimmer {
+  0%, 100% { opacity: 0.035; }
+  50%      { opacity: 0.05; }
 }

@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import SmoothScroll from "@/components/SmoothScroll";
 import CustomCursor from "@/components/CustomCursor";
 import PageTransition from "@/components/PageTransition";
+import AnimatedBackground from "@/components/AnimatedBackground";
 import { EditProvider } from "@/components/EditProvider";
 import SaveOverlay from "@/components/SaveOverlay";
 import EditToggle from "@/components/EditToggle";
@@ -37,6 +38,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col">
+        <AnimatedBackground />
         <CustomCursor />
         <EditProvider>
           <SaveOverlay />

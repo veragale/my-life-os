@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 """
+如果你觉得每次都要敲三行命令太麻烦，你可以直接对 Claude Code 说：
+“帮我在项目的 package.json 的 scripts 里面，加一条叫 deploy 的命令。让它能一句话帮我执行 git add . && git commit -m 'site update' && git push origin main。”
+这样加了之后，以后你每次改完网页，在终端里只需要敲一行：
+npm run deploy
+
 my-life-os 业务调度总入口  
 cd my-life-os
 npm install && npm run dev
