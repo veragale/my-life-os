@@ -226,14 +226,14 @@ export default function TimelineContent({ entries }: TimelineContentProps) {
             <motion.div className="fixed inset-0 z-[100] bg-white/40 dark:bg-ink-950/60 backdrop-blur-md"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={closeDrawer} />
-            <motion.div className="fixed top-0 right-0 bottom-0 z-[101] w-[90%] max-w-4xl bg-white/80 dark:bg-ink-900/90 backdrop-blur-xl border-l border-neutral-200/60 dark:border-ink-800/50 shadow-xl shadow-black/40 dark:shadow-2xl dark:shadow-black/80 ring-1 ring-black/5 dark:ring-white/10 flex flex-col"
+            <motion.div className="fixed top-0 right-0 bottom-0 z-[101] w-[90%] max-w-4xl bg-white/90 dark:bg-ink-900/95 backdrop-blur-xl border-l border-neutral-200/80 dark:border-ink-800/60 shadow-xl shadow-black/10 dark:shadow-2xl dark:shadow-black/90 ring-1 ring-black/5 dark:ring-white/15 overflow-hidden flex flex-col"
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}>
               {/* ── Header ──────────────────────────── */}
               <div className="flex items-center justify-between p-8 border-b border-neutral-200/60 dark:border-ink-800/50">
                 <div>
-                  <h2 className="text-3xl font-bold text-neutral-900 dark:text-ink-50 tracking-tight">{drawerEntry.year} — {drawerEntry.title}</h2>
+                  <h2 className="text-3xl font-bold text-neutral-900 dark:text-ink-50 tracking-tight">{drawerEntry.title}</h2>
                   <div className="flex gap-2 mt-3">
                     {drawerEntry.tags.map((tag) => (
                       <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-neutral-100 dark:bg-ink-800/60 text-neutral-600 dark:text-ink-400 font-medium tracking-wide">{tag}</span>

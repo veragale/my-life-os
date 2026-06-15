@@ -65,6 +65,19 @@ export default function GardenContent({ entries }: GardenContentProps) {
     };
   }, [modalEntry]);// ⚠️ 注意：这里的依赖项必须填 [selectedPost]！
 
+  // ── 监听 Esc 键快速关闭弹窗 ──────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setModalEntry(null);      // 关闭大弹窗
+        setShowNote(false);       // (可选) 如果新建便签开着，也一起关掉
+        setEditingEntry(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const openCreate = () => { setEditingEntry(null); setForm(emptyForm); setShowNote(true); };
   const openEdit = (entry: GardenEntry) => {
     setEditingEntry(entry);
@@ -140,7 +153,10 @@ export default function GardenContent({ entries }: GardenContentProps) {
               </div>
               <textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })}
                 placeholder={"写下想法...支持 Markdown\n\n## 小标题\n正文内容\n\n> 一句引用"} rows={4}
-                className="w-full px-3 py-2.5 text-sm leading-relaxed bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300/50 dark:focus:ring-emerald-700/50 text-ink-800 dark:text-ink-200 font-mono" />
+                className="w-full px-3 py-2.5 text-sm leading-relaxed bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300/50 dark:focus:ring-emerald-700/50 text-ink-800 dark:text-ink-200 font-mono" 
+                onWheel={(e) => e.stopPropagation()} 
+                data-lenis-prevent="true" 
+              />
               <div className="flex items-center justify-between">
                 <input type="text" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
                   placeholder="标签（逗号分隔）" className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300/50 dark:focus:ring-emerald-700/50 text-ink-600 dark:text-ink-400" />
@@ -213,11 +229,10 @@ export default function GardenContent({ entries }: GardenContentProps) {
             onClick={() => setModalEntry(null)}>
 
             {/* 👉 直接塞进来的强制锁定 CSS 👈 */}
+            {/* 👉 修正版防穿透 CSS：去除 height: 100vh，防止关闭时跳回顶部 👈 */}
             <style dangerouslySetInnerHTML={{__html: `
-              body, html, #__next, main, [data-scroll-container] {
+              body, html {
                 overflow: hidden !important;
-                height: 100vh !important;
-                touch-action: none;
               }
             `}} />
             <motion.div
