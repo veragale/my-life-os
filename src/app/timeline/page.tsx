@@ -2,6 +2,10 @@ import { CalendarDays } from "lucide-react";
 import { Suspense } from "react";
 import TimelineContent from "./TimelineContent";
 
+// 因为Vercel没有找到对应的代码，所以在这里尝试添加东西
+import fs from 'fs';
+import path from 'path';
+
 export const dynamic = "force-dynamic";
 
 // ── 数据类型 ─────────────────────────────────────────────
@@ -18,6 +22,19 @@ interface TimelineData {
   entries: TimelineEntry[];
 }
 
+// ── SSG: 构建时读取 JSON (Vercel Serverless 防御特化版) ─────────────────
+async function getTimelineData(): Promise<TimelineData> {
+  const fs = await import("fs");
+  const path = await import("path");
+  
+  // 🌟 核心变化：将路径彻底拆分为独立的逗号参数，强制 Vercel 扫描打包
+  const filePath = path.join(process.cwd(), "public", "data", "timeline.json");
+  
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(raw);
+}
+
+/*
 // ── SSG: 构建时读取 JSON ─────────────────────────────────
 async function getTimelineData(): Promise<TimelineData> {
   const fs = await import("fs");
@@ -28,6 +45,7 @@ async function getTimelineData(): Promise<TimelineData> {
   );
   return JSON.parse(raw);
 }
+*/
 
 // ── 页面组件 ─────────────────────────────────────────────
 export default async function TimelinePage() {
