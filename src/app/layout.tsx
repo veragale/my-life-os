@@ -9,6 +9,7 @@ import AnimatedBackground from "@/components/AnimatedBackground";
 import { EditProvider } from "@/components/EditProvider";
 import SaveOverlay from "@/components/SaveOverlay";
 import EditToggle from "@/components/EditToggle";
+import ProgressBar from "@/components/ProgressBar";
 
 export const metadata: Metadata = {
   title: "风上心's Life OS",
@@ -38,6 +39,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col">
+        
         <AnimatedBackground />
         <CustomCursor />
         <EditProvider>
@@ -46,8 +48,9 @@ export default function RootLayout({
           <SmoothScroll>
             <Navbar />
             <div className="flex-1 flex flex-col">
+              <ProgressBar />
               <PageTransition>{children}</PageTransition>
-            </div>
+            </div>  
             <Footer birthDate="2003-02-28" daysOnEarth={8506} />
           </SmoothScroll>
         </EditProvider>

@@ -148,3 +148,40 @@ html.lenis body {
   0%, 100% { opacity: 0.035; }
   50%      { opacity: 0.05; }
 }
+
+/* ==========================================
+   Awwwards 级全局滚动条定制 (自适应日夜模式)
+   ========================================== */
+
+/* 1. 设置滚动条的整体宽度和高度（极细质感） */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* 2. 滚动条的轨道（完全透明，不遮挡网页背景） */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 3. 白天模式下的滑块（浅银灰色，带有圆角） */
+::-webkit-scrollbar-thumb {
+  background-color: rgba(163, 163, 163, 0.4); /* neutral-400 的半透明 */
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+/* 白天模式下，鼠标悬浮在滑块上时加深颜色 */
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(163, 163, 163, 0.8);
+}
+
+/* 4. 黑夜模式下的滑块（隐秘的暗晶色） */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(82, 82, 91, 0.5); /* zinc-600 的半透明 */
+}
+
+/* 黑夜模式下，鼠标悬浮在滑块上时加深颜色 */
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(113, 113, 122, 0.8);
+}
