@@ -24,6 +24,13 @@ export default function HeroSection({
   daysOnEarth,
   yearProgress,
 }: HeroSectionProps) {
+
+  // ── 人生进度算法计算 ─────────────────────────────────
+  const birthDate = new Date('2003-02-28').getTime();
+  const lifeExpectancy = 80 * 365.25 * 24 * 60 * 60 * 1000; // 假设 80 年的宇宙旅程
+  const now = new Date().getTime();
+  const lifeProgress = (((now - birthDate) / lifeExpectancy) * 100).toFixed(2);
+
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
       {/* ── 1. 品牌标签 ──────────────────────────── */}
@@ -100,7 +107,7 @@ export default function HeroSection({
         记录来路，标注此刻，想象去处。
       </motion.p>
 
-      {/* ── 5. 年度进度条 ─────────────────────────── */}
+      {/* ── 5. 人生进度条 ─────────────────────────── */}
       <motion.div
         className="w-full max-w-sm mx-auto mt-12"
         initial={{ opacity: 0, y: 16 }}
@@ -109,15 +116,18 @@ export default function HeroSection({
       >
         <div className="border border-ink-200 dark:border-ink-800 rounded-lg px-5 py-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-ink-500 dark:text-ink-400">Year Progress</span>
+            {/* 标签已改成 Life Progress */}
+            <span className="text-ink-500 dark:text-ink-400">Life Progress</span>
             <span className="font-mono tabular-nums font-medium">
-              {yearProgress}%
+              {/* 数字替换为动态计算的人生进度 */}
+              {lifeProgress}%
             </span>
           </div>
           <div className="w-full h-1.5 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
+            {/* 进度条宽度也同步替换 */}
             <div
               className="h-full bg-ink-900 dark:bg-ink-100 rounded-full animate-bar-fill"
-              style={{ "--bar-width": `${yearProgress}%` } as React.CSSProperties}
+              style={{ "--bar-width": `${lifeProgress}%` } as React.CSSProperties}
             />
           </div>
         </div>
