@@ -1,5 +1,16 @@
+import type { Metadata } from "next";
 import { Sprout, Flower2, TreePine } from "lucide-react";
 import GardenContent from "./GardenContent";
+import BackToTop from "@/components/BackToTop";
+
+export const metadata: Metadata = {
+  title: "数字花园 · Life OS",
+  description: "想法生长的地方——有的刚冒出土壤，有的正在舒展，有的已经扎根。",
+  openGraph: {
+    title: "数字花园 · Life OS",
+    description: "想法生长的地方——有的刚冒出土壤，有的正在舒展，有的已经扎根。",
+  },
+};
 
 // ── 数据类型 ─────────────────────────────────────────────
 interface GardenEntry {
@@ -69,6 +80,8 @@ export default async function GardenPage() {
 
       {/* ── 卡片墙（含编辑功能）──────────────────────── */}
       <GardenContent entries={data.entries} />
+
+      <BackToTop />
 
       {/* ── 底部 ─────────────────────────────────────── */}
       <div className="mt-16 pt-8 border-t border-ink-200 dark:border-ink-800">

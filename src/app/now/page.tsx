@@ -1,5 +1,15 @@
+import type { Metadata } from "next";
 import { Clock } from "lucide-react";
 import NowContent from "./NowContent";
+
+export const metadata: Metadata = {
+  title: "此时此刻 · Life OS",
+  description: "不追求「最新」，只追求「真实」——记录某一个真实的切面。",
+  openGraph: {
+    title: "此时此刻 · Life OS",
+    description: "不追求「最新」，只追求「真实」——记录某一个真实的切面。",
+  },
+};
 
 // ── 数据类型 ─────────────────────────────────────────────
 interface NowData {

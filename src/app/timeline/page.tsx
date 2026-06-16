@@ -1,12 +1,22 @@
+import type { Metadata } from "next";
 import { CalendarDays } from "lucide-react";
 import { Suspense } from "react";
 import TimelineContent from "./TimelineContent";
+import BackToTop from "@/components/BackToTop";
+
+export const metadata: Metadata = {
+  title: "编年史 · Life OS",
+  description: "时间不是线性的，但记忆需要一个锚点。按年份记录那些值得标记的时刻。",
+  openGraph: {
+    title: "编年史 · Life OS",
+    description: "时间不是线性的，但记忆需要一个锚点。按年份记录那些值得标记的时刻。",
+  },
+};
 
 // 🌟 方案二核心：直接把 JSON 当成 JS 模块硬编码引入！
 // 路径解析：当前文件在 src/app/timeline，通过 ../../../ 跳回项目根目录，再进入 public/data
 import timelineDataJson from "../../../public/data/timeline.json";
 
-export const dynamic = "force-dynamic";
 
 // ── 数据类型 ─────────────────────────────────────────────
 interface TimelineEntry {
@@ -56,6 +66,8 @@ export default async function TimelinePage() {
       <Suspense fallback={<div className="text-center py-8 text-ink-400">Loading...</div>}>
         <TimelineContent entries={data.entries} />
       </Suspense>
+
+      <BackToTop />
 
       {/* ── 底部 ─────────────────────────────────────── */}
       <div className="mt-16 pt-8 border-t border-ink-200 dark:border-ink-800">

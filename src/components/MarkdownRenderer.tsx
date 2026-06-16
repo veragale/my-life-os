@@ -5,23 +5,45 @@ import type { Components } from "react-markdown";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// ── 工具：把标题文本转为 URL 安全的 id ──────────────────
+function headingId(children: React.ReactNode): string {
+  const text = Array.isArray(children)
+    ? children.map((c) => (typeof c === "string" ? c : "")).join("")
+    : String(children ?? "");
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s一-鿿-]/g, "") // 保留中英文、数字、空格、连字符
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80) || "heading";
+}
+
 // ── 默认排版组件 ─────────────────────────────────────────
 const defaultComponents: Components = {
   h1: ({ children }) => (
-    <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-8 leading-tight">
+    <h1 id={headingId(children)} className="text-3xl sm:text-4xl font-bold tracking-tight mb-8 leading-tight scroll-mt-20">
       {children}
     </h1>
   ),
-  h2: ({ children }) => (
-    <h2 className="text-xl font-semibold mt-10 mb-4 text-ink-800 dark:text-ink-200">
-      {children}
-    </h2>
-  ),
-  h3: ({ children }) => (
-    <h3 className="text-lg font-semibold mt-8 mb-3 text-ink-800 dark:text-ink-200">
-      {children}
-    </h3>
-  ),
+  h2: ({ children }) => {
+    const id = headingId(children);
+    return (
+      <h2 id={id} className="text-xl font-semibold mt-10 mb-4 text-ink-800 dark:text-ink-200 scroll-mt-20 group">
+        {children}
+        <a href={`#${id}`} className="inline-block ml-2 opacity-0 group-hover:opacity-50 transition-opacity text-ink-400 dark:text-ink-600 text-base no-underline hover:opacity-100" aria-label="锚点链接">#</a>
+      </h2>
+    );
+  },
+  h3: ({ children }) => {
+    const id = headingId(children);
+    return (
+      <h3 id={id} className="text-lg font-semibold mt-8 mb-3 text-ink-800 dark:text-ink-200 scroll-mt-20 group">
+        {children}
+        <a href={`#${id}`} className="inline-block ml-2 opacity-0 group-hover:opacity-50 transition-opacity text-ink-400 dark:text-ink-600 text-base no-underline hover:opacity-100" aria-label="锚点链接">#</a>
+      </h3>
+    );
+  },
   p: ({ children }) => (
     <p className="text-base leading-[1.85] text-ink-700 dark:text-ink-300 mb-4">
       {children}

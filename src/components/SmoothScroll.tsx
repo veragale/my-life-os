@@ -28,6 +28,8 @@ export default function SmoothScroll({
     });
 
     lenisRef.current = lenis;
+    // 暴露到 window 上，方便 BackToTop 等组件直接调用
+    (window as any).__lenis = lenis;
 
     function raf(time: number) {
       lenis.raf(time);
@@ -37,6 +39,7 @@ export default function SmoothScroll({
     requestAnimationFrame(raf);
 
     return () => {
+      (window as any).__lenis = undefined;
       lenis.destroy();
     };
   }, []);

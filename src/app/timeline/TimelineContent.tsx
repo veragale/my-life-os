@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Plus, X, Save, Trash2, Pencil, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter, usePathname } from "next/navigation";
 import { useEditMode } from "@/components/EditProvider";
 import { useContentEditor } from "@/hooks/useContentEditor";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
@@ -25,6 +26,8 @@ const emptyEvent = { date: "", title: "", body: "" };
 export default function TimelineContent({ entries }: TimelineContentProps) {
   const { isEditing } = useEditMode();
   const { save, remove } = useContentEditor();
+  const router = useRouter();
+  const pathname = usePathname();
 
   // ★ 移除 useSearchParams() —— 它在客户端导航时导致组件 suspend → 白屏
   // 改用 isEditing（来自 EditProvider 全局状态）控制编辑功能
@@ -38,6 +41,32 @@ export default function TimelineContent({ entries }: TimelineContentProps) {
   const [eventForm, setEventForm] = useState(emptyEvent);
   const [editingEventIdx, setEditingEventIdx] = useState<number | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
+  const [scrolledYear, setScrolledYear] = useState<string | null>(null);
+
+  // ── 从 URL 读取 ?year=<year>，滚动到对应年份 ────────────
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const targetYear = params.get("year");
+      if (targetYear && targetYear !== scrolledYear) {
+        setScrolledYear(targetYear);
+        const raf = requestAnimationFrame(() => {
+          const el = document.getElementById(`year-${targetYear}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            // 高亮脉冲
+            el.classList.add("ring-2", "ring-ink-900/20", "dark:ring-ink-100/20");
+            setTimeout(() => {
+              el.classList.remove("ring-2", "ring-ink-900/20", "dark:ring-ink-100/20");
+            }, 2000);
+          }
+          // 滚动完成后清理 URL，防止重复滚动
+          router.replace(pathname, { scroll: false });
+        });
+        return () => cancelAnimationFrame(raf);
+      }
+    } catch {}
+  });
 
   // ── 打开新建弹窗 ──────────────────────────────────────
   const openCreate = () => { setEditingEntry(null); setForm(emptyForm); setShowModal(true); };
@@ -129,7 +158,7 @@ export default function TimelineContent({ entries }: TimelineContentProps) {
       <ol className="relative">
         <div className="absolute left-[15px] sm:left-[19px] top-3 bottom-3 w-px bg-ink-200 dark:bg-ink-800" />
         {entries.map((entry, i) => (
-          <li key={entry.slug} className="relative pl-10 sm:pl-12 pb-14 last:pb-0">
+          <li key={entry.slug} id={`year-${entry.year}`} className="relative pl-10 sm:pl-12 pb-14 last:pb-0 scroll-mt-20 transition-all duration-500 rounded-lg">
             <div className={`absolute left-[11px] sm:left-2.5 top-2 w-3 h-3 rounded-full border-2 ${i === 0 ? "bg-ink-900 dark:bg-ink-100 border-ink-900 dark:border-ink-100" : "bg-ink-50 dark:bg-ink-950 border-ink-300 dark:border-ink-700"}`} />
             <div className="flex items-baseline gap-3 mb-4">
               <span className="font-mono text-lg font-bold tabular-nums text-ink-900 dark:text-ink-100">{entry.year}</span>
@@ -224,12 +253,17 @@ export default function TimelineContent({ entries }: TimelineContentProps) {
         {drawerEntry && (
           <>
             <style dangerouslySetInnerHTML={{__html: `body, html { overflow: hidden !important; height: 100vh !important; }`}} />
+            {/* 遮罩：进入快，退出慢半拍，让抽屉滑出时遮罩还在 */}
             <motion.div className="fixed inset-0 z-[100] bg-white/40 dark:bg-ink-950/60 backdrop-blur-md"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              exit={{ opacity: 0, transition: { duration: 0.35, ease: "easeOut" } }}
+              transition={{ duration: 0.2 }}
               onClick={closeDrawer} />
+            {/* 抽屉：用更柔和的弹簧曲线，退出时略微加速 */}
             <motion.div className="fixed top-0 right-0 bottom-0 z-[101] w-[90%] max-w-4xl bg-white/90 dark:bg-ink-900/95 backdrop-blur-xl border-l border-neutral-200/80 dark:border-ink-800/60 shadow-xl shadow-black/10 dark:shadow-2xl dark:shadow-black/90 ring-1 ring-black/5 dark:ring-white/15 overflow-hidden flex flex-col"
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0, transition: { type: "spring", damping: 26, stiffness: 180, mass: 0.8 } }}
+              exit={{ x: "100%", transition: { duration: 0.35, ease: [0.76, 0, 0.24, 1] } }}
               onClick={(e) => e.stopPropagation()}>
               {/* ── Header ──────────────────────────── */}
               <div className="flex items-center justify-between p-8 border-b border-neutral-200/60 dark:border-ink-800/50">

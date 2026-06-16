@@ -1,6 +1,16 @@
+import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import HeroSection from "@/components/HeroSection";
+
+export const metadata: Metadata = {
+  title: "风上心's Life OS",
+  description: "A personal life operating system — documenting days on Earth and beyond.",
+  openGraph: {
+    title: "风上心's Life OS",
+    description: "A personal life operating system — documenting days on Earth and beyond.",
+  },
+};
 
 // ── 数据类型 ─────────────────────────────────────────────
 interface HomeData {

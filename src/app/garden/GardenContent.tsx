@@ -3,9 +3,11 @@
 import { useState, useCallback, useEffect } from "react";
 import { Plus, Save, Sprout, Flower2, TreePine, Tag, Trash2, Pencil, Leaf, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter, usePathname } from "next/navigation";
 import { useEditMode } from "@/components/EditProvider";
 import { useContentEditor } from "@/hooks/useContentEditor";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import TableOfContents from "@/components/TableOfContents";
 
 interface GardenEntry {
   slug: string; title: string; date: string;
@@ -42,6 +44,8 @@ const emptyForm = { title: "", tags: "", body: "", status: "seedling" as StatusK
 export default function GardenContent({ entries }: GardenContentProps) {
   const { isEditing } = useEditMode();
   const { save, remove } = useContentEditor();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [showNote, setShowNote] = useState(false);
   const [editingEntry, setEditingEntry] = useState<GardenEntry | null>(null);
@@ -51,6 +55,46 @@ export default function GardenContent({ entries }: GardenContentProps) {
 
   const sorted = [...entries].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const filtered = filter === "all" ? sorted : sorted.filter((e) => e.status === filter);
+
+  // ── 关闭弹窗（清理 URL + 滚动到对应卡片）───────────────
+  const closeModal = useCallback(() => {
+    const closingSlug = modalEntry?.slug;
+    setModalEntry(null);
+    // 移除 URL 中的 ?open=xxx，避免 useEffect 重复打开
+    if (window.location.search.includes("open=")) {
+      router.replace(pathname, { scroll: false });
+    }
+    // 弹窗关闭后，滚动到对应卡片位置，方便后续操作
+    if (closingSlug) {
+      requestAnimationFrame(() => {
+        const card = document.getElementById(`card-${closingSlug}`);
+        if (card) {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          // 高亮脉冲
+          card.classList.add("ring-2", "ring-ink-400/40", "dark:ring-ink-400/30");
+          setTimeout(() => {
+            card.classList.remove("ring-2", "ring-ink-400/40", "dark:ring-ink-400/30");
+          }, 1500);
+        }
+      });
+    }
+  }, [router, pathname, modalEntry]);
+
+  // ── 从 URL 读取 ?open=<slug>，自动打开对应弹窗 ────────
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const openSlug = params.get("open");
+      if (openSlug && modalEntry?.slug !== openSlug) {
+        const entry = entries.find((e) => e.slug === openSlug);
+        if (entry) {
+          setModalEntry(entry);
+          // 打开后立即清理 URL，防止关闭弹窗后被 effect 重新打开
+          router.replace(pathname, { scroll: false });
+        }
+      }
+    } catch {}
+  });
 
   // ── 锁定背景滚动 ──────────────────────────────────────
   useEffect(() => {
@@ -69,14 +113,14 @@ export default function GardenContent({ entries }: GardenContentProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setModalEntry(null);      // 关闭大弹窗
-        setShowNote(false);       // (可选) 如果新建便签开着，也一起关掉
+        closeModal();      // 关闭大弹窗
+        setShowNote(false);
         setEditingEntry(null);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [closeModal]);
 
   const openCreate = () => { setEditingEntry(null); setForm(emptyForm); setShowNote(true); };
   const openEdit = (entry: GardenEntry) => {
@@ -181,11 +225,11 @@ export default function GardenContent({ entries }: GardenContentProps) {
             const status = (entry.status || "seedling") as StatusKey;
             const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.seedling;
             return (
-              <motion.article key={entry.slug} layout
+              <motion.article key={entry.slug} layout id={`card-${entry.slug}`}
                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.25, ease: "easeOut" }}
                 onClick={() => setModalEntry(entry)}
-                className={`group relative rounded-xl border p-5 transition-all duration-200 hover:shadow-md cursor-pointer ${cfg.color.bg} ${cfg.color.border} ${i === 0 && filter === "all" ? "sm:col-span-2" : ""}`}>
+                className={`group relative rounded-xl border p-5 transition-all duration-200 hover:shadow-md cursor-pointer scroll-mt-20 ${cfg.color.bg} ${cfg.color.border} ${i === 0 && filter === "all" ? "sm:col-span-2" : ""}`}>
                 <div className="flex items-center justify-between mb-3">
                   <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.color.bg} ${cfg.color.text} border ${cfg.color.border}`}>
                     <cfg.icon size={10} /> {cfg.label}
@@ -226,7 +270,7 @@ export default function GardenContent({ entries }: GardenContentProps) {
           <motion.div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-white/40 dark:bg-ink-950/60 backdrop-blur-md overflow-y-auto"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setModalEntry(null)}>
+            onClick={closeModal}>
 
             {/* 👉 直接塞进来的强制锁定 CSS 👈 */}
             {/* 👉 修正版防穿透 CSS：去除 height: 100vh，防止关闭时跳回顶部 👈 */}
@@ -236,7 +280,7 @@ export default function GardenContent({ entries }: GardenContentProps) {
               }
             `}} />
             <motion.div
-              className="relative w-full max-w-3xl my-8 bg-white/90 dark:bg-ink-900/95 backdrop-blur-xl border border-neutral-200/80 dark:border-ink-800/60 rounded-2xl shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/90 ring-1 ring-black/5 dark:ring-white/15 overflow-hidden flex flex-col max-h-[85vh]"
+              className="relative w-full max-w-5xl my-8 bg-white/90 dark:bg-ink-900/95 backdrop-blur-xl border border-neutral-200/80 dark:border-ink-800/60 rounded-2xl shadow-xl shadow-black/5 dark:shadow-2xl dark:shadow-black/90 ring-1 ring-black/5 dark:ring-white/15 overflow-hidden flex flex-col max-h-[85vh]"
               initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
               onClick={(e) => e.stopPropagation()}>
@@ -265,18 +309,28 @@ export default function GardenContent({ entries }: GardenContentProps) {
                     )}
                   </div>
                 </div>
-                <button onClick={() => setModalEntry(null)}
+                <button onClick={closeModal}
                   className="shrink-0 p-2 rounded-lg text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors">
                   <X size={20} />
                 </button>
               </div>
-              {/* ── Body（可滚动）─────────────────── */}
-              <div 
-                className="flex-1 overflow-y-auto overscroll-contain px-6 py-6"
+              {/* ── Body（可滚动，含 TOC 侧栏）───────── */}
+              <div
+                className="flex-1 overflow-y-auto overscroll-contain"
                 onWheel={(e) => e.stopPropagation()}
                 data-lenis-prevent="true"
               >
-                <MarkdownRenderer content={modalEntry.body} />
+                <div className="flex gap-0">
+                  {/* 主内容 */}
+                  <div className="flex-1 min-w-0 px-6 py-6">
+                    <MarkdownRenderer content={modalEntry.body} />
+                  </div>
+                  {/* TOC 侧栏 */}
+                  <TableOfContents
+                    content={modalEntry.body}
+                    className="w-48 shrink-0 border-l border-ink-100 dark:border-ink-800/50 pr-5 pl-4 py-6"
+                  />
+                </div>
               </div>
             </motion.div>
           </motion.div>

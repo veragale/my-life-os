@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import SearchProvider from "@/components/SearchProvider";
 import Footer from "@/components/Footer";
 import SmoothScroll from "@/components/SmoothScroll";
 import CustomCursor from "@/components/CustomCursor";
@@ -10,6 +10,7 @@ import { EditProvider } from "@/components/EditProvider";
 import SaveOverlay from "@/components/SaveOverlay";
 import EditToggle from "@/components/EditToggle";
 import ProgressBar from "@/components/ProgressBar";
+import KeyboardShortcuts from "@/components/KeyboardShortcuts";
 
 export const metadata: Metadata = {
   title: "风上心's Life OS",
@@ -45,8 +46,9 @@ export default function RootLayout({
         <EditProvider>
           <SaveOverlay />
           <EditToggle />
+          <KeyboardShortcuts />
           <SmoothScroll>
-            <Navbar />
+            <SearchProvider />
             <div className="flex-1 flex flex-col">
               <ProgressBar />
               <PageTransition>{children}</PageTransition>

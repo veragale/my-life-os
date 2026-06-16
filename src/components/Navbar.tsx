@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Globe } from "lucide-react";
+import { Globe, Search } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import MagneticWrapper from "./MagneticWrapper";
 
@@ -12,7 +12,11 @@ const NAV_LINKS = [
 ] as const;
 
 // ── 组件 ─────────────────────────────────────────────────
-export default function Navbar() {
+interface NavbarProps {
+  onSearchOpen?: () => void;
+}
+
+export default function Navbar({ onSearchOpen }: NavbarProps) {
   return (
     <nav className="sticky top-0 z-50 w-full backdrop-blur-md bg-ink-50/80 dark:bg-ink-950/80 border-b border-ink-200/50 dark:border-ink-800/50">
       <div className="max-w-3xl mx-auto px-6 h-12 flex items-center justify-between">
@@ -53,10 +57,23 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* ── 右：主题切换 ─────────────────────────── */}
-        <MagneticWrapper strength={0.5}>
-          <ThemeToggle />
-        </MagneticWrapper>
+        {/* ── 右：搜索 + 主题切换 ───────────────────── */}
+        <div className="flex items-center gap-2">
+          <MagneticWrapper strength={0.4}>
+            <button
+              onClick={onSearchOpen}
+              className="flex items-center gap-1.5 text-xs text-ink-400 dark:text-ink-500 hover:text-ink-700 dark:hover:text-ink-300 transition-colors duration-150 px-2 py-1 rounded-md hover:bg-ink-100 dark:hover:bg-ink-800/60"
+            >
+              <Search size={14} />
+              <kbd className="hidden sm:inline text-[10px] font-mono text-ink-300 dark:text-ink-600">
+                ⌘K
+              </kbd>
+            </button>
+          </MagneticWrapper>
+          <MagneticWrapper strength={0.5}>
+            <ThemeToggle />
+          </MagneticWrapper>
+        </div>
       </div>
     </nav>
   );

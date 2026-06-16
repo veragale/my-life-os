@@ -1,5 +1,16 @@
+import type { Metadata } from "next";
 import { ListChecks } from "lucide-react";
 import BucketContent from "./BucketContent";
+import BackToTop from "@/components/BackToTop";
+
+export const metadata: Metadata = {
+  title: "愿望清单 · Life OS",
+  description: "不是待办事项，是生命的可能性目录。完成的划掉，新的不断加入。",
+  openGraph: {
+    title: "愿望清单 · Life OS",
+    description: "不是待办事项，是生命的可能性目录。完成的划掉，新的不断加入。",
+  },
+};
 
 // ── 数据类型 ─────────────────────────────────────────────
 interface BucketData {
@@ -43,6 +54,8 @@ export default async function BucketListPage() {
 
       {/* ── 清单（含编辑功能）────────────────────────── */}
       <BucketContent metadata={data.metadata} body={data.body} />
+
+      <BackToTop />
 
       {/* ── 底部 ─────────────────────────────────────── */}
       <div className="mt-16 pt-8 border-t border-ink-200 dark:border-ink-800">
