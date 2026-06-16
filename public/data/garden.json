@@ -2,11 +2,11 @@
   "entries": [
     {
       "slug": "精神领袖",
-      "title": "精神领袖",
+      "title": "图片测试",
       "date": "2026-06-15",
       "tags": [],
       "status": "seedling",
-      "body": "# 精神领袖\n\n![SGA](/images/SGA.jpg)"
+      "body": "# 图片测试\n\n![SGA](/images/SGA.jpg)"
     },
     {
       "slug": "hello-world",

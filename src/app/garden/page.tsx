@@ -15,15 +15,10 @@ interface GardenData {
   entries: GardenEntry[];
 }
 
-// ── SSG: 构建时读取 JSON ─────────────────────────────────
+import gardenDataJson from "../../../public/data/garden.json";
+
 async function getGardenData(): Promise<GardenData> {
-  const fs = await import("fs");
-  const path = await import("path");
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), "public/data/garden.json"),
-    "utf-8"
-  );
-  return JSON.parse(raw);
+  return gardenDataJson as GardenData;
 }
 
 // ── 状态图例配置 ─────────────────────────────────────────

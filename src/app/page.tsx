@@ -11,15 +11,10 @@ interface HomeData {
   birthDate: string;
 }
 
-// ── SSG: 构建时读取 JSON ─────────────────────────────────
+import homeDataJson from "../../public/data/home.json";
+
 async function getHomeData(): Promise<HomeData> {
-  const fs = await import("fs");
-  const path = await import("path");
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), "public/data/home.json"),
-    "utf-8"
-  );
-  return JSON.parse(raw);
+  return homeDataJson as HomeData;
 }
 
 // ── 导航链接配置 ─────────────────────────────────────────

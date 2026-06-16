@@ -11,15 +11,10 @@ interface NowData {
   body: string;
 }
 
-// ── SSG: 构建时读取 JSON ─────────────────────────────────
+import nowDataJson from "../../../public/data/now.json";
+
 async function getNowData(): Promise<NowData> {
-  const fs = await import("fs");
-  const path = await import("path");
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), "public/data/now.json"),
-    "utf-8"
-  );
-  return JSON.parse(raw);
+  return nowDataJson as NowData;
 }
 
 // ── 页面组件 ─────────────────────────────────────────────

@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEditMode } from "@/components/EditProvider";
 import { useContentEditor } from "@/hooks/useContentEditor";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
-import { useSearchParams } from "next/navigation";
 // ── 数据类型 ─────────────────────────────────────────────
 interface LifeEvent { date: string; title: string; body: string; }
 interface TimelineEntry { slug: string; title: string; date: string; year: string; tags: string[]; body: string; events?: LifeEvent[]; }
@@ -26,8 +25,10 @@ const emptyEvent = { date: "", title: "", body: "" };
 export default function TimelineContent({ entries }: TimelineContentProps) {
   const { isEditing } = useEditMode();
   const { save, remove } = useContentEditor();
-  const searchParams = useSearchParams();
-  const editMode = searchParams.get("edit") === "true";
+
+  // ★ 移除 useSearchParams() —— 它在客户端导航时导致组件 suspend → 白屏
+  // 改用 isEditing（来自 EditProvider 全局状态）控制编辑功能
+  const editMode = isEditing;
 
   const [showModal, setShowModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<TimelineEntry | null>(null);
