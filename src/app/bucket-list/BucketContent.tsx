@@ -12,11 +12,12 @@ interface BucketItem { text: string; done: boolean; }
 interface BucketGroup { emoji: string; title: string; items: BucketItem[]; }
 interface BucketContentProps { metadata: { title: string; updated: string; slug: string }; body: string; }
 
-// ── 解析 / 重建 ──────────────────────────────────────────
+// ── 解析 / 重建 (增加安全防御) ───────────────────────────
 function parseBucketBody(body: string): BucketGroup[] {
+  const safeBody = body || ""; // 防弹设计：防止 body 为 undefined 时崩溃
   const groups: BucketGroup[] = [];
   let current: BucketGroup | null = null;
-  for (const line of body.split("\n")) {
+  for (const line of safeBody.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed) continue;
     const h2Match = trimmed.match(/^##\s+(.+)/);
@@ -48,8 +49,9 @@ export default function BucketContent({ metadata, body }: BucketContentProps) {
   const { isEditing } = useEditMode();
   const { saved, save: doApiSave } = useContentEditor();
 
-  const footer = body.includes("---") ? (body.split("---").pop() || "").trim() : "";
-  const [groups, setGroups] = useState<BucketGroup[]>(() => parseBucketBody(body));
+  const safeBody = body || ""; // 防弹设计
+  const footer = safeBody.includes("---") ? (safeBody.split("---").pop() || "").trim() : "";
+  const [groups, setGroups] = useState<BucketGroup[]>(() => parseBucketBody(safeBody));
   const [newItemText, setNewItemText] = useState("");
   const [addingToGroup, setAddingToGroup] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<{ gi: number; ii: number } | null>(null);
@@ -181,7 +183,8 @@ export default function BucketContent({ metadata, body }: BucketContentProps) {
                 {/* ── 编辑：添加新条目 ────────────── */}
                 <AnimatePresence>
                   {isEditing && addingToGroup === gi && (
-                    <motion.li className="flex items-center gap-2 px-4 py-2" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
+                    // 🌟 修复点 1：必须给包裹在 AnimatePresence 里的 motion.li 添加独一无二的 key！
+                    <motion.li key={`add-input-${gi}`} className="flex items-center gap-2 px-4 py-2" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
                       <Circle size={16} className="shrink-0 text-ink-200 dark:text-ink-800" />
                       <input type="text" value={newItemText} onChange={(e) => setNewItemText(e.target.value)}
                         onKeyDown={(e) => { if (e.key === "Enter") addItem(gi); if (e.key === "Escape") { setAddingToGroup(null); setNewItemText(""); } }}
@@ -216,14 +219,16 @@ export default function BucketContent({ metadata, body }: BucketContentProps) {
       {/* ── 编辑模式提示 / 保存成功 ──────────────────── */}
       <AnimatePresence>
         {isEditing && !saved && (
-          <motion.p className="text-[11px] text-ink-400 dark:text-ink-600 text-center mt-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          // 🌟 修复点 2：添加 key="edit-hint"
+          <motion.p key="edit-hint" className="text-[11px] text-ink-400 dark:text-ink-600 text-center mt-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             点击条目可切换完成状态 · 点击 🗑 删除愿望 · 点击 + 新增
           </motion.p>
         )}
       </AnimatePresence>
       <AnimatePresence>
         {saved && (
-          <motion.p className="text-xs text-emerald-600 dark:text-emerald-400 text-center mt-4" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}>
+          // 🌟 修复点 3：添加 key="save-success"
+          <motion.p key="save-success" className="text-xs text-emerald-600 dark:text-emerald-400 text-center mt-4" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}>
             ✓ 生命数据已同步
           </motion.p>
         )}

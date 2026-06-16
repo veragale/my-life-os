@@ -1,6 +1,10 @@
 import { ListChecks } from "lucide-react";
 import BucketContent from "./BucketContent";
 
+// 🌟 核心绝杀：直接将 bucket.json 强行打包进代码中，彻底绕开 fs 拦截
+// （注意：如果报错找不到文件，请根据你的实际目录层级增减 "../"）
+import bucketDataJson from "../../../public/data/bucket.json";
+
 // ── 数据类型 ─────────────────────────────────────────────
 interface BucketData {
   metadata: {
@@ -11,15 +15,10 @@ interface BucketData {
   body: string;
 }
 
-// ── SSG: 构建时读取 JSON ─────────────────────────────────
+// ── SSG: 终极暴力读取数据 (Vercel 绝对防弹版) ─────────────────
 async function getBucketData(): Promise<BucketData> {
-  const fs = await import("fs");
-  const path = await import("path");
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), "public/data/bucket.json"),
-    "utf-8"
-  );
-  return JSON.parse(raw);
+  // 直接把 import 进来的 JSON 当作静态数据返回！彻底解决客户端跳转白屏！
+  return bucketDataJson as BucketData;
 }
 
 // ── 页面组件 ─────────────────────────────────────────────
