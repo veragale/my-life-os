@@ -2,9 +2,9 @@ import { CalendarDays } from "lucide-react";
 import { Suspense } from "react";
 import TimelineContent from "./TimelineContent";
 
-// 因为Vercel没有找到对应的代码，所以在这里尝试添加东西
-import fs from 'fs';
-import path from 'path';
+// 🌟 方案二核心：直接把 JSON 当成 JS 模块硬编码引入！
+// 路径解析：当前文件在 src/app/timeline，通过 ../../../ 跳回项目根目录，再进入 public/data
+import timelineDataJson from "../../../public/data/timeline.json";
 
 export const dynamic = "force-dynamic";
 
@@ -22,30 +22,11 @@ interface TimelineData {
   entries: TimelineEntry[];
 }
 
-// ── SSG: 构建时读取 JSON (Vercel Serverless 防御特化版) ─────────────────
+// ── SSG: 终极暴力读取 JSON (Vercel 绝对防弹版) ─────────────────
 async function getTimelineData(): Promise<TimelineData> {
-  const fs = await import("fs");
-  const path = await import("path");
-  
-  // 🌟 核心变化：将路径彻底拆分为独立的逗号参数，强制 Vercel 扫描打包
-  const filePath = path.join(process.cwd(), "public", "data", "timeline.json");
-  
-  const raw = fs.readFileSync(filePath, "utf-8");
-  return JSON.parse(raw);
+  // 因为 JSON 已经在文件顶部被打包进来了，这里连 fs 读取都不需要了，直接返回！
+  return timelineDataJson as TimelineData;
 }
-
-/*
-// ── SSG: 构建时读取 JSON ─────────────────────────────────
-async function getTimelineData(): Promise<TimelineData> {
-  const fs = await import("fs");
-  const path = await import("path");
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), "public/data/timeline.json"),
-    "utf-8"
-  );
-  return JSON.parse(raw);
-}
-*/
 
 // ── 页面组件 ─────────────────────────────────────────────
 export default async function TimelinePage() {
