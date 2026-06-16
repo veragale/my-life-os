@@ -88,6 +88,11 @@ export default async function GardenPage() {
         <p className="text-xs text-ink-400 dark:text-ink-600 text-center">
           花园不需要按时间排序——它按生长的状态呼吸。
         </p>
+        {data.entries.length > 0 && (
+          <p className="text-[10px] text-ink-300 dark:text-ink-600 text-center mt-1.5">
+            最后更新：{data.entries.reduce((latest, e) => e.date > latest ? e.date : latest, "")}
+          </p>
+        )}
       </div>
     </main>
   );

@@ -74,6 +74,11 @@ export default async function TimelinePage() {
         <p className="text-xs text-ink-400 dark:text-ink-600 text-center">
           编年史不会完整——它只是那些我选择记住的部分。
         </p>
+        {data.entries.length > 0 && (
+          <p className="text-[10px] text-ink-300 dark:text-ink-600 text-center mt-1.5">
+            最后更新：{data.entries.reduce((latest, e) => e.date > latest ? e.date : latest, "")}
+          </p>
+        )}
       </div>
     </main>
   );

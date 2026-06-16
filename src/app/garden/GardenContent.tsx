@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Plus, Save, Sprout, Flower2, TreePine, Tag, Trash2, Pencil, Leaf, X } from "lucide-react";
+import { Plus, Save, Sprout, Flower2, TreePine, Tag, Trash2, Pencil, Leaf, X, Link2, Check, EyeOff, Columns2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname } from "next/navigation";
 import { useEditMode } from "@/components/EditProvider";
 import { useContentEditor } from "@/hooks/useContentEditor";
-import MarkdownRenderer from "@/components/MarkdownRenderer";
+import MarkdownRenderer, { estimateReadingTime } from "@/components/MarkdownRenderer";
 import TableOfContents from "@/components/TableOfContents";
+
+const DRAFT_KEY = "life-os-garden-draft";
 
 interface GardenEntry {
   slug: string; title: string; date: string;
@@ -52,6 +54,9 @@ export default function GardenContent({ entries }: GardenContentProps) {
   const [form, setForm] = useState(emptyForm);
   const [filter, setFilter] = useState<FilterType>("all");
   const [modalEntry, setModalEntry] = useState<GardenEntry | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   const sorted = [...entries].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   const filtered = filter === "all" ? sorted : sorted.filter((e) => e.status === filter);
@@ -109,18 +114,21 @@ export default function GardenContent({ entries }: GardenContentProps) {
     };
   }, [modalEntry]);// ⚠️ 注意：这里的依赖项必须填 [selectedPost]！
 
-  // ── 监听 Esc 键快速关闭弹窗 ──────────────────────────
+  // ── 监听 Esc 键：逐层关闭，先图片 → 再弹窗 ──────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        closeModal();      // 关闭大弹窗
+        // 如果图片正在全屏缩放，仅关闭图片（MarkdownRenderer 内部会处理）
+        // isImageZoomed 由 MarkdownRenderer 的 onImageZoomChange 回调同步
+        if (isImageZoomed) return;
+        closeModal();
         setShowNote(false);
         setEditingEntry(null);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [closeModal]);
+  }, [closeModal, isImageZoomed]);
 
   const openCreate = () => { setEditingEntry(null); setForm(emptyForm); setShowNote(true); };
   const openEdit = (entry: GardenEntry) => {
@@ -128,6 +136,32 @@ export default function GardenContent({ entries }: GardenContentProps) {
     setForm({ title: entry.title, tags: entry.tags.join(", "), body: entry.body.replace(/^# .+\n\n/, ""), status: entry.status });
     setShowNote(true);
   };
+
+  // ── 草稿自动保存到 localStorage ──────────────────────
+  // 每次表单变化时保存草稿（防抖 1 秒）
+  useEffect(() => {
+    if (!showNote) return;
+    const timer = setTimeout(() => {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(form)); } catch {}
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [form, showNote]);
+
+  // 挂载时检查是否有未提交的草稿
+  useEffect(() => {
+    if (!isEditing || showNote) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft.title || draft.body) {
+          const restore = confirm("检测到未保存的草稿，是否恢复？");
+          if (restore) { setForm(draft); setShowNote(true); }
+          else { localStorage.removeItem(DRAFT_KEY); }
+        }
+      }
+    } catch {}
+  }, [isEditing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = useCallback(async () => {
     if (!form.title || !form.body) return;
@@ -139,7 +173,7 @@ export default function GardenContent({ entries }: GardenContentProps) {
       body: `# ${form.title}\n\n${form.body}`,
       metadata: { title: form.title, date, tags, status: form.status },
     });
-    if (ok) { setShowNote(false); setEditingEntry(null); setForm(emptyForm); }
+    if (ok) { setShowNote(false); setEditingEntry(null); setForm(emptyForm); try { localStorage.removeItem(DRAFT_KEY); } catch {} }
   }, [form, save, editingEntry]);
 
   const handleDelete = useCallback(async (slug: string) => {
@@ -195,17 +229,55 @@ export default function GardenContent({ entries }: GardenContentProps) {
                   ))}
                 </div>
               </div>
-              <textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })}
-                placeholder={"写下想法...支持 Markdown\n\n## 小标题\n正文内容\n\n> 一句引用"} rows={4}
-                className="w-full px-3 py-2.5 text-sm leading-relaxed bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300/50 dark:focus:ring-emerald-700/50 text-ink-800 dark:text-ink-200 font-mono" 
-                onWheel={(e) => e.stopPropagation()} 
-                data-lenis-prevent="true" 
-              />
+              {/* ── Markdown 分屏编辑器 ────────────────── */}
+              <div className={`${showPreview ? "flex flex-col md:flex-row" : ""} gap-3`}>
+                {/* 编辑区 */}
+                <textarea
+                  value={form.body}
+                  onChange={(e) => setForm({ ...form, body: e.target.value })}
+                  placeholder={"写下想法...支持 Markdown\n\n## 小标题\n正文内容\n\n> 一句引用"}
+                  rows={showPreview ? 14 : 4}
+                  className={`${showPreview ? "flex-1 md:w-1/2 min-h-[320px]" : "w-full"} px-3 py-2.5 text-sm leading-relaxed bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-300/50 dark:focus:ring-emerald-700/50 text-ink-800 dark:text-ink-200 font-mono`}
+                  onWheel={(e) => { if (showPreview) return; e.stopPropagation(); }}
+                  data-lenis-prevent={showPreview ? undefined : "true"}
+                />
+                {/* 预览区 */}
+                {showPreview && (
+                  <div className="flex-1 md:w-1/2 min-h-[320px] max-h-[500px] overflow-y-auto overscroll-contain rounded-lg border border-ink-200 dark:border-ink-800 bg-white dark:bg-ink-950 px-4 py-3"
+                    onWheel={(e) => e.stopPropagation()}
+                    data-lenis-prevent="true"
+                  >
+                    {form.body.trim() ? (
+                      <MarkdownRenderer content={form.body} onImageZoomChange={setIsImageZoomed} />
+                    ) : (
+                      <p className="text-xs text-ink-300 dark:text-ink-600 italic mt-2">
+                        预览会在这里实时显示…
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="flex items-center justify-between">
-                <input type="text" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                  placeholder="标签（逗号分隔）" className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300/50 dark:focus:ring-emerald-700/50 text-ink-600 dark:text-ink-400" />
+                <div className="flex items-center gap-2">
+                  <input type="text" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                    placeholder="标签（逗号分隔）" className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-ink-950 border border-ink-200 dark:border-ink-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-300/50 dark:focus:ring-emerald-700/50 text-ink-600 dark:text-ink-400" />
+                  {/* 预览切换 */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPreview((v) => !v)}
+                    className={`inline-flex items-center gap-1 px-2 py-1.5 text-[11px] rounded-lg transition-all duration-200 ${
+                      showPreview
+                        ? "bg-ink-200 dark:bg-ink-700 text-ink-700 dark:text-ink-300"
+                        : "text-ink-400 dark:text-ink-600 hover:text-ink-600 dark:hover:text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800/60"
+                    }`}
+                    title={showPreview ? "关闭预览" : "分屏预览"}
+                  >
+                    {showPreview ? <EyeOff size={12} /> : <Columns2 size={12} />}
+                    <span className="hidden sm:inline">{showPreview ? "关闭预览" : "预览"}</span>
+                  </button>
+                </div>
                 <div className="flex items-center gap-2 ml-3">
-                  <button onClick={() => { setShowNote(false); setEditingEntry(null); }}
+                  <button onClick={() => { setShowNote(false); setEditingEntry(null); setShowPreview(false); }}
                     className="px-3 py-1.5 text-xs text-ink-400 dark:text-ink-600 hover:text-ink-600 dark:hover:text-ink-400 transition-colors">收起</button>
                   <button onClick={handleSubmit} disabled={!form.title || !form.body}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-emerald-600 dark:bg-emerald-500 text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed">
@@ -300,6 +372,10 @@ export default function GardenContent({ entries }: GardenContentProps) {
                       );
                     })()}
                     <span className="text-xs text-ink-400 dark:text-ink-600">{modalEntry.date}</span>
+                    {/* 阅读时长 */}
+                    <span className="text-[10px] text-ink-300 dark:text-ink-600 font-mono">
+                      约 {estimateReadingTime(modalEntry.body)} 分钟阅读
+                    </span>
                     {modalEntry.tags.length > 0 && (
                       <div className="flex gap-1.5">
                         {modalEntry.tags.map((tag) => (
@@ -309,10 +385,29 @@ export default function GardenContent({ entries }: GardenContentProps) {
                     )}
                   </div>
                 </div>
-                <button onClick={closeModal}
-                  className="shrink-0 p-2 rounded-lg text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors">
-                  <X size={20} />
-                </button>
+                {/* 右侧按钮组 */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* 复制链接 */}
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/garden?open=${encodeURIComponent(modalEntry.slug)}`;
+                      navigator.clipboard.writeText(url).then(() => {
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      });
+                    }}
+                    className="p-2 rounded-lg text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors"
+                    aria-label="复制文章链接"
+                    title="复制文章链接"
+                  >
+                    {copiedLink ? <Check size={16} className="text-emerald-500" /> : <Link2 size={16} />}
+                  </button>
+                  {/* 关闭 */}
+                  <button onClick={closeModal}
+                    className="p-2 rounded-lg text-ink-400 hover:text-ink-900 dark:hover:text-ink-100 hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
               {/* ── Body（可滚动，含 TOC 侧栏）───────── */}
               <div
@@ -323,7 +418,7 @@ export default function GardenContent({ entries }: GardenContentProps) {
                 <div className="flex gap-0">
                   {/* 主内容 */}
                   <div className="flex-1 min-w-0 px-6 py-6">
-                    <MarkdownRenderer content={modalEntry.body} />
+                    <MarkdownRenderer content={modalEntry.body} onImageZoomChange={setIsImageZoomed} />
                   </div>
                   {/* TOC 侧栏 */}
                   <TableOfContents

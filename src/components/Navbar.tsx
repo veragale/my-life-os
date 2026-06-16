@@ -65,9 +65,6 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
               className="flex items-center gap-1.5 text-xs text-ink-400 dark:text-ink-500 hover:text-ink-700 dark:hover:text-ink-300 transition-colors duration-150 px-2 py-1 rounded-md hover:bg-ink-100 dark:hover:bg-ink-800/60"
             >
               <Search size={14} />
-              <kbd className="hidden sm:inline text-[10px] font-mono text-ink-300 dark:text-ink-600">
-                ⌘K
-              </kbd>
             </button>
           </MagneticWrapper>
           <MagneticWrapper strength={0.5}>

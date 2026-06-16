@@ -62,6 +62,9 @@ export default async function BucketListPage() {
         <p className="text-xs text-ink-400 dark:text-ink-600 text-center">
           愿望清单的生命力，不在于完成了多少，而在于还在期待什么。
         </p>
+        <p className="text-[10px] text-ink-300 dark:text-ink-600 text-center mt-1.5">
+          最后更新：{data.metadata.updated}
+        </p>
       </div>
     </main>
   );

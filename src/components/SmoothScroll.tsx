@@ -44,9 +44,16 @@ export default function SmoothScroll({
     };
   }, []);
 
-  // ★ 路由切换 → 瞬间滚回顶部
+  // ★ 路由切换 → 滚回顶部 + 重新测量页面高度
   useEffect(() => {
-    lenisRef.current?.scrollTo(0, { immediate: true });
+    const lenis = lenisRef.current;
+    if (!lenis) return;
+    lenis.scrollTo(0, { immediate: true });
+    // 等 React 渲染完新页面内容后再重新计算高度
+    const raf = requestAnimationFrame(() => {
+      lenis.resize();
+    });
+    return () => cancelAnimationFrame(raf);
   }, [pathname]);
 
   return <>{children}</>;
